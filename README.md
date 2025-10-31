@@ -62,7 +62,10 @@ This repository contains comprehensive documentation for implementing Facebook a
    
    For Node.js:
    ```bash
+   # For local development (if you don't have package-lock.json or want to update dependencies):
    npm install
+   # For production or CI environments (for consistent, reproducible builds based on package-lock.json):
+   npm ci
    ```
 
 4. **Set Up Database**
