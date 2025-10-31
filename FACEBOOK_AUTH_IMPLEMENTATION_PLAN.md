@@ -18,7 +18,7 @@ This document outlines a comprehensive plan to implement secure Facebook authent
 - **Database:** PostgreSQL or MongoDB for storing encrypted tokens
 - **Authentication Library:** 
   - Python: `facebook-sdk` or `requests-oauthlib`
-  - Node.js: `passport-facebook` or `@facebook/facebook-nodejs-business-sdk`
+  - Node.js: `passport-facebook` (for OAuth authentication)
 - **Environment Management:** `python-dotenv` or Node.js `dotenv`
 - **Encryption:** `cryptography` (Python) or `crypto` (Node.js)
 
