@@ -31,6 +31,9 @@ app.use((req, res, next) => {
     // Enable XSS protection
     res.setHeader('X-XSS-Protection', '1; mode=block');
     // Content Security Policy
+    // Note: frame-src * is required for the preview feature to load any website
+    // The iframe has sandbox attribute for additional protection
+    // unsafe-inline is needed for the existing inline scripts and styles
     res.setHeader('Content-Security-Policy', "default-src 'self'; frame-src *; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
     next();
 });
@@ -183,6 +186,37 @@ app.delete('/api/alerts/:id', (req, res) => {
     res.json({ success: true });
 });
 
+// Shared function to check a page with Playwright
+async function checkPageWithPlaywright(url, keywords = []) {
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    });
+    const page = await context.newPage();
+    
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    
+    // Wait a bit for dynamic content
+    await page.waitForTimeout(3000);
+    
+    // Get page content
+    const textContent = await page.evaluate(() => document.body.innerText);
+    
+    // Check for keywords
+    const foundKeywords = [];
+    if (keywords && keywords.length > 0) {
+        keywords.forEach(keyword => {
+            if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
+                foundKeywords.push(keyword);
+            }
+        });
+    }
+    
+    await browser.close();
+    
+    return { textContent, foundKeywords };
+}
+
 // Check page with Playwright
 app.post('/api/check-page', playwrightLimiter, async (req, res) => {
     const { url, keywords } = req.body;
@@ -192,32 +226,7 @@ app.post('/api/check-page', playwrightLimiter, async (req, res) => {
     }
 
     try {
-        const browser = await chromium.launch({ headless: true });
-        const context = await browser.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        });
-        const page = await context.newPage();
-        
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-        
-        // Wait a bit for dynamic content
-        await page.waitForTimeout(3000);
-        
-        // Get page content
-        const content = await page.content();
-        const textContent = await page.evaluate(() => document.body.innerText);
-        
-        // Check for keywords
-        const foundKeywords = [];
-        if (keywords && keywords.length > 0) {
-            keywords.forEach(keyword => {
-                if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
-                    foundKeywords.push(keyword);
-                }
-            });
-        }
-        
-        await browser.close();
+        const { textContent, foundKeywords } = await checkPageWithPlaywright(url, keywords);
         
         res.json({
             success: true,
@@ -239,28 +248,7 @@ app.post('/api/check-page', playwrightLimiter, async (req, res) => {
 // Background monitoring function
 async function checkMonitor(monitor) {
     try {
-        const browser = await chromium.launch({ headless: true });
-        const context = await browser.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        });
-        const page = await context.newPage();
-        
-        await page.goto(monitor.url, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(3000);
-        
-        const textContent = await page.evaluate(() => document.body.innerText);
-        
-        // Check for keywords
-        const foundKeywords = [];
-        if (monitor.keywords && monitor.keywords.length > 0) {
-            monitor.keywords.forEach(keyword => {
-                if (textContent.toLowerCase().includes(keyword.toLowerCase())) {
-                    foundKeywords.push(keyword);
-                }
-            });
-        }
-        
-        await browser.close();
+        const { textContent, foundKeywords } = await checkPageWithPlaywright(monitor.url, monitor.keywords);
         
         // If keywords found, create alert
         if (foundKeywords.length > 0) {
