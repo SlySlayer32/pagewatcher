@@ -362,6 +362,11 @@ def encrypt_token(token: str, encryption_key: str) -> dict:
     """
     Encrypts a token using AES-256-GCM.
     
+    Args:
+        token: The access token string to encrypt
+        encryption_key: Base64-encoded 32-byte encryption key (str or bytes)
+                       Generate with: base64.b64encode(os.urandom(32)).decode()
+    
     Returns:
         {
             'encrypted_data': base64_encoded_string,
@@ -393,6 +398,13 @@ def encrypt_token(token: str, encryption_key: str) -> dict:
 def decrypt_token(encrypted_data: dict, encryption_key: str) -> str:
     """
     Decrypts a token using AES-256-GCM.
+    
+    Args:
+        encrypted_data: Dictionary containing encrypted_data, salt, iv, and tag (all base64-encoded)
+        encryption_key: Base64-encoded 32-byte encryption key (same key used for encryption)
+    
+    Returns:
+        Decrypted token string
     """
     salt = base64.b64decode(encrypted_data['salt'])
     iv = base64.b64decode(encrypted_data['iv'])
