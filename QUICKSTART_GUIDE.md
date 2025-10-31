@@ -409,10 +409,23 @@ def facebook_callback():
     session['user_id'] = user_data.get('id')
     session['user_name'] = user_data.get('name')
     
-    # SECURITY: Encrypt token before storage - see SECURITY.md for implementation
-    # Example: encrypted_token = encrypt_token(access_token, ENCRYPTION_KEY)
-    # For this demo only - NEVER store plain tokens in production:
-    session['access_token'] = access_token  # TODO: Replace with encrypted storage
+    # =======================
+    # 🚨 SECURITY WARNING 🚨
+    # NEVER store access tokens in plain text in production!
+    # Always encrypt tokens before storing them in session or database.
+    # See SECURITY.md for details.
+    # =======================
+
+    # Example using Fernet symmetric encryption (requires 'cryptography' library)
+    from cryptography.fernet import Fernet
+
+    ENCRYPTION_KEY = b'your-32-byte-base64-key-here'  # Replace with your actual key
+    def encrypt_token(token, key):
+        f = Fernet(key)
+        return f.encrypt(token.encode())
+
+    encrypted_token = encrypt_token(access_token, ENCRYPTION_KEY)
+    session['access_token'] = encrypted_token
     
     return redirect('/dashboard')
 
