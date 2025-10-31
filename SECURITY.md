@@ -63,7 +63,7 @@ def handle_callback():
 
 ```python
 ALLOWED_REDIRECT_URIS = [
-    'http://localhost:3000/auth/facebook/callback',  # Development only - NEVER use HTTP in production!
+    'http://localhost:3000/auth/facebook/callback',  # Development only - Never use HTTP in production!
     'https://yourdomain.com/auth/facebook/callback'   # Production - HTTPS required
 ]
 
