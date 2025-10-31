@@ -4,13 +4,41 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { chromium } = require('playwright');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+
+const playwrightLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit Playwright checks to 20 per 15 minutes
+    message: 'Too many page check requests, please try again later.'
+});
+
+// Security headers
+app.use((req, res, next) => {
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'DENY');
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Enable XSS protection
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    // Content Security Policy
+    res.setHeader('Content-Security-Policy', "default-src 'self'; frame-src *; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
+    next();
+});
+
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use('/api', apiLimiter);
 
 // Data storage
 const DATA_DIR = path.join(__dirname, 'data');
@@ -156,7 +184,7 @@ app.delete('/api/alerts/:id', (req, res) => {
 });
 
 // Check page with Playwright
-app.post('/api/check-page', async (req, res) => {
+app.post('/api/check-page', playwrightLimiter, async (req, res) => {
     const { url, keywords } = req.body;
     
     if (!url) {

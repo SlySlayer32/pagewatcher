@@ -8,14 +8,23 @@
     "dev": "nodemon server.js",
     "test": "echo \"No tests specified\" && exit 0"
   },
-  "keywords": ["page", "watcher", "monitor", "social-media", "facebook", "twitter", "instagram"],
+  "keywords": [
+    "page",
+    "watcher",
+    "monitor",
+    "social-media",
+    "facebook",
+    "twitter",
+    "instagram"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.20.2",
     "express": "^4.18.2",
-    "playwright": "^1.40.0",
+    "express-rate-limit": "^7.5.1",
     "node-cron": "^3.0.3",
-    "body-parser": "^1.20.2"
+    "playwright": "^1.40.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

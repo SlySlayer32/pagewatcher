@@ -9,6 +9,18 @@ const API = {
 let monitors = [];
 let alerts = [];
 
+// HTML escape utility to prevent XSS
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     loadMonitors();
@@ -76,16 +88,16 @@ function renderMonitors() {
                 <div>
                     <div class="monitor-title">
                         <span class="status-indicator ${monitor.active ? 'active' : 'inactive'}"></span>
-                        ${truncateUrl(monitor.url, 40)}
+                        ${escapeHtml(truncateUrl(monitor.url, 40))}
                     </div>
-                    <span class="platform-badge ${monitor.platform}">${monitor.platform}</span>
+                    <span class="platform-badge ${escapeHtml(monitor.platform)}">${escapeHtml(monitor.platform)}</span>
                 </div>
                 <div class="monitor-actions">
                     <button class="btn ${monitor.active ? 'btn-secondary' : 'btn-success'}" 
-                            onclick="toggleMonitor('${monitor.id}')">
+                            onclick="toggleMonitor('${escapeHtml(monitor.id)}')">
                         ${monitor.active ? 'Pause' : 'Resume'}
                     </button>
-                    <button class="btn btn-danger" onclick="deleteMonitor('${monitor.id}')">
+                    <button class="btn btn-danger" onclick="deleteMonitor('${escapeHtml(monitor.id)}')">
                         Delete
                     </button>
                 </div>
@@ -100,7 +112,7 @@ function renderMonitors() {
             ` : ''}
             ${monitor.keywords && monitor.keywords.length > 0 ? `
                 <div class="monitor-keywords">
-                    ${monitor.keywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')}
+                    ${monitor.keywords.map(kw => `<span class="keyword-tag">${escapeHtml(kw)}</span>`).join('')}
                 </div>
             ` : ''}
         </div>
@@ -135,26 +147,26 @@ function renderAlerts() {
                 </div>
                 <div class="alert-actions">
                     ${!alert.read ? `
-                        <button class="btn btn-success" onclick="markAlertRead('${alert.id}')">
+                        <button class="btn btn-success" onclick="markAlertRead('${escapeHtml(alert.id)}')">
                             Mark Read
                         </button>
                     ` : ''}
-                    <button class="btn btn-danger" onclick="deleteAlert('${alert.id}')">
+                    <button class="btn btn-danger" onclick="deleteAlert('${escapeHtml(alert.id)}')">
                         Delete
                     </button>
                 </div>
             </div>
             <div class="alert-preview">
-                ${alert.preview}
+                ${escapeHtml(alert.preview)}
             </div>
             <div class="monitor-info">
-                <a href="${alert.url}" target="_blank" rel="noopener noreferrer">
-                    ${truncateUrl(alert.url, 50)}
+                <a href="${escapeHtml(alert.url)}" target="_blank" rel="noopener noreferrer">
+                    ${escapeHtml(truncateUrl(alert.url, 50))}
                 </a>
             </div>
             ${alert.foundKeywords && alert.foundKeywords.length > 0 ? `
                 <div class="alert-keywords">
-                    ${alert.foundKeywords.map(kw => `<span class="alert-keyword">${kw}</span>`).join('')}
+                    ${alert.foundKeywords.map(kw => `<span class="alert-keyword">${escapeHtml(kw)}</span>`).join('')}
                 </div>
             ` : ''}
         </div>
@@ -238,14 +250,14 @@ async function handleQuickCheck(e) {
             resultDiv.className = 'quick-check-result success';
             
             let html = '<h4>✓ Check Complete</h4>';
-            html += `<p><strong>URL:</strong> ${truncateUrl(result.url, 50)}</p>`;
+            html += `<p><strong>URL:</strong> ${escapeHtml(truncateUrl(result.url, 50))}</p>`;
             html += `<p><strong>Time:</strong> ${formatTime(result.timestamp)}</p>`;
             
             if (result.foundKeywords && result.foundKeywords.length > 0) {
                 html += `<p><strong>Found Keywords:</strong></p>`;
                 html += `<div class="quick-check-keywords">`;
                 result.foundKeywords.forEach(kw => {
-                    html += `<span class="alert-keyword">${kw}</span>`;
+                    html += `<span class="alert-keyword">${escapeHtml(kw)}</span>`;
                 });
                 html += `</div>`;
             } else if (keywords.length > 0) {
@@ -254,7 +266,7 @@ async function handleQuickCheck(e) {
             
             if (result.preview) {
                 html += `<p><strong>Preview:</strong></p>`;
-                html += `<p style="font-size: 12px; color: #64748b; margin-top: 8px;">${result.preview}</p>`;
+                html += `<p style="font-size: 12px; color: #64748b; margin-top: 8px;">${escapeHtml(result.preview)}</p>`;
             }
             
             resultDiv.innerHTML = html;
@@ -268,7 +280,7 @@ async function handleQuickCheck(e) {
         resultDiv.className = 'quick-check-result error';
         resultDiv.innerHTML = `
             <h4>✗ Check Failed</h4>
-            <p>${error.message}</p>
+            <p>${escapeHtml(error.message)}</p>
             <p style="font-size: 12px; margin-top: 8px;">
                 This might happen if the page blocks automated access or takes too long to load.
             </p>
@@ -378,12 +390,26 @@ function loadPreview() {
         return;
     }
     
+    // Validate URL format
+    try {
+        const urlObj = new URL(url);
+        // Only allow http and https protocols to prevent javascript: protocol XSS
+        if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+            showNotification('Only HTTP and HTTPS URLs are allowed', 'error');
+            return;
+        }
+    } catch (e) {
+        showNotification('Invalid URL format', 'error');
+        return;
+    }
+    
     // Hide error, show frame
     error.style.display = 'none';
     frame.style.display = 'block';
     
-    // Try to load the URL
-    frame.src = url;
+    // Safe to use setAttribute with validated URL (http/https only)
+    // The iframe has sandbox attribute which provides additional protection
+    frame.setAttribute('src', url);
     
     // Show error if iframe fails to load (some sites block iframes)
     frame.onerror = () => {
