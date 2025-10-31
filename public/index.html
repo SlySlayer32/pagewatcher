@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Page Watcher - Monitor Social Media Posts</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Web Page Watcher</h1>
+            <p class="subtitle">Monitor social media pages for new posts and opportunities</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel: Monitors and Alerts -->
+            <div class="left-panel">
+                <!-- Add Monitor Section -->
+                <section class="card">
+                    <h2>Add New Monitor</h2>
+                    <form id="addMonitorForm">
+                        <div class="form-group">
+                            <label for="url">Page URL *</label>
+                            <input type="url" id="url" name="url" required 
+                                   placeholder="https://facebook.com/yourlocalpage">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="platform">Platform</label>
+                            <select id="platform" name="platform">
+                                <option value="facebook">Facebook</option>
+                                <option value="twitter">Twitter/X</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="keywords">Keywords (comma-separated)</label>
+                            <input type="text" id="keywords" name="keywords" 
+                                   placeholder="cleaning, house, carpet, residential">
+                            <small>Monitor for posts containing these keywords</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="checkInterval">Check Interval (minutes)</label>
+                            <input type="number" id="checkInterval" name="checkInterval" 
+                                   value="30" min="5" max="1440">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add Monitor</button>
+                    </form>
+                </section>
+
+                <!-- Active Monitors -->
+                <section class="card">
+                    <h2>Active Monitors</h2>
+                    <div id="monitorsList" class="monitors-list">
+                        <p class="empty-state">No monitors yet. Add one above!</p>
+                    </div>
+                </section>
+
+                <!-- Alerts -->
+                <section class="card">
+                    <h2>Recent Alerts</h2>
+                    <div id="alertsList" class="alerts-list">
+                        <p class="empty-state">No alerts yet.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Panel: Preview and Quick Check -->
+            <div class="right-panel">
+                <!-- Quick Check -->
+                <section class="card">
+                    <h2>Quick Page Check</h2>
+                    <p>Use Playwright to instantly check a page for keywords</p>
+                    <form id="quickCheckForm">
+                        <div class="form-group">
+                            <label for="quickUrl">Page URL</label>
+                            <input type="url" id="quickUrl" name="quickUrl" required 
+                                   placeholder="https://facebook.com/page">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quickKeywords">Keywords (comma-separated)</label>
+                            <input type="text" id="quickKeywords" name="quickKeywords" 
+                                   placeholder="cleaning, house">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Check Now</button>
+                    </form>
+
+                    <div id="quickCheckResult" class="quick-check-result"></div>
+                </section>
+
+                <!-- Page Preview -->
+                <section class="card">
+                    <h2>Page Preview</h2>
+                    <p>View pages directly (note: some sites block iframe embedding)</p>
+                    <div class="form-group">
+                        <input type="url" id="previewUrl" placeholder="Enter URL to preview">
+                        <button onclick="loadPreview()" class="btn btn-secondary">Load Preview</button>
+                    </div>
+                    <div class="preview-container">
+                        <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+                        <div id="previewError" class="preview-error" style="display: none;">
+                            ⚠️ This page cannot be displayed in an iframe. Use the "Check Now" feature with Playwright instead.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Usage Tips -->
+                <section class="card tips">
+                    <h3>💡 Tips for Your Cleaning Business</h3>
+                    <ul>
+                        <li><strong>Facebook Groups:</strong> Monitor local community groups for cleaning requests</li>
+                        <li><strong>Keywords:</strong> Use terms like "cleaning", "house cleaning", "carpet", "maid", "residential"</li>
+                        <li><strong>Check Interval:</strong> Set to 15-30 minutes for active groups</li>
+                        <li><strong>Playwright Mode:</strong> Use "Quick Page Check" for sites that block iframe viewing</li>
+                        <li><strong>Alerts:</strong> Check alerts regularly for potential job opportunities</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
