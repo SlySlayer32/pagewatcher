@@ -405,10 +405,14 @@ def facebook_callback():
     
     user_data = user_response.json()
     
-    # Store user info in session (implement proper storage in production)
+    # Store user info in session
     session['user_id'] = user_data.get('id')
     session['user_name'] = user_data.get('name')
-    session['access_token'] = access_token  # Should be encrypted in production!
+    
+    # SECURITY: Encrypt token before storage - see SECURITY.md for implementation
+    # Example: encrypted_token = encrypt_token(access_token, ENCRYPTION_KEY)
+    # For this demo only - NEVER store plain tokens in production:
+    session['access_token'] = access_token  # TODO: Replace with encrypted storage
     
     return redirect('/dashboard')
 
